@@ -67,3 +67,91 @@ OAuthには、以下の基本的な認可フローがあります。ここでは
 ---
 
 OAuthは、ユーザーのデータを安全に共有できるように設計されており、広く普及している認証と権限付与の標準です。
+
+## AWSでサンプルを構築する場合
+
+API Gateway + Lambda + Cognito で構築する。
+
+## Cognitoでサインした時に得られるデータ
+
+- IDトークン
+- アクセストークン
+- 有効期限
+- トークンタイプ
+
+これらが得られる。
+
+## ハンズオン用のURL
+
+- 認可リクエスト  
+    https://<ドメイン名>.auth.ap-northeast-1.amazoncognito.com/oauth2/authorize?client_id=<クライアントID>&response_type=code&scope=aws.cognito.signin.user.admin+email+openid+phone+profile&redirect_uri=http://localhost:8080
+- トークンリクエスト  	
+    curl -d "client_id=<クライアントID>" -d "client_secret=<クライアントシークレット>" -d "redirect_uri=http://localhost:8080" -d "grant_type=authorization_code" -d "code=<認可コード>" https://<ドメイン名>.auth.ap-northeast-1.amazoncognito.com/oauth2/token
+- リソースアクセス  
+    curl -H "Authorization: <アクセストークン>" <リソースサーバーURL>
+
+## ハンズオンの記録
+
+認可リクエスト
+
+```bash
+https://oauth-domain-mashharuki.auth.ap-northeast-1.amazoncognito.com/oauth2/authorize?client_id=48ir8k44dep3f0hbsfuuto3ldb&response_type=code&scope=aws.cognito.signin.user.admin+email+openid+phone+profile&redirect_uri=http://localhost:8080
+```
+
+すると認可コード付きで以下のURLにリダイレクトする。
+
+```bash
+http://localhost:8080/?code=3b472ab1-7685-40b4-b877-6724e7412a3f
+```
+
+トークンリクエスト
+
+```bash
+curl -d "client_id=48ir8k44dep3f0hbsfuuto3ldb" -d "client_secret=" -d "redirect_uri=http://localhost:8080" -d "grant_type=authorization_code" -d "code=3b472ab1-7685-40b4-b877-6724e7412a3f" https://oauth-domain-mashharuki.auth.ap-northeast-1.amazoncognito.com/oauth2/token
+```
+
+そうすると
+
+- IDトークン
+- アクセストークン
+- 有効期限
+- トークンタイプ
+
+が得られる。
+
+
+リソースアクセス
+
+```bash
+curl -H "Authorization: eyJraWQiOiJ2V1hZT0FKc2tjc0VFSzhvY0dMdXNxaTRtVU5vRHJzcGQ4THEybDVoRktvPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJhNzY0NmEwOC1iMDYxLTcwMzMtYjQ4Ni1kOTliNTk4ZDZjZDciLCJ0b2tlbl91c2UiOiJhY2Nlc3MiLCJzY29wZSI6ImF3cy5jb2duaXRvLnNpZ25pbi51c2VyLmFkbWluIHBob25lIG9wZW5pZCBwcm9maWxlIGVtYWlsIiwiYXV0aF90aW1lIjoxNzMwMDA5ODE3LCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAuYXAtbm9ydGhlYXN0LTEuYW1hem9uYXdzLmNvbVwvYXAtbm9ydGhlYXN0LTFfdnZCQ1ViTjFMIiwiZXhwIjoxNzMwMDEzNDE3LCJpYXQiOjE3MzAwMDk4MTcsInZlcnNpb24iOjIsImp0aSI6IjVhYmM3NGU2LTZhZTQtNDc5NC1iYTk5LWNkODNkZDE0ODZjNCIsImNsaWVudF9pZCI6IjQ4aXI4azQ0ZGVwM2YwaGJzZnV1dG8zbGRiIiwidXNlcm5hbWUiOiJtYXNoaGFydWtpIn0.JGEQrkgAldKXiCA-fKSCM74isDvCmraPYndpTRFQxFvo_RSadPqsUzXHZmVmVnhJxktLRFOguWygqXqXXIojAoJ834pQQDE1OGwN7wLjI4ugiDBeVGNEb-_zRE_Y327DlfS5erJ5NT4Fj-2B1Go0yl0GZPYDn9ggSOg7Ygkv8LJ3il608PDAaPLtYXGACMgCCX0OkY0hBGjqp8OrgXwdqZ5o-Vc6YlITCFuU3TM7cqx0L3yR0l6_HQ_Ms0QoZ8J3Pt0BOj4_Maz-pFGmDpwxrBOakI4cG6XFkxOXshy6JsARx8Iq3kStXFlpuHUFtl9my5-4jch2cKqe1mGkWo89OA" -XGET "https://h1l298lwfb.execute-api.ap-northeast-1.amazonaws.com/oauth-stage/oauth-resource"
+```
+
+以下の結果が返ってくればOK!
+
+```json
+{
+    "statusCode":200,
+    "body":"\"AWSで学ぶ！OAuth入門講座へようこそ！\""
+}
+```
+
+PKCEありだとそれぞれ以下のようなURLとなる。
+
+- 認可リクエスト    
+
+    ```bash
+    https://<ドメイン名>.auth.ap-northeast-1.amazoncognito.com/oauth2/authorize?client_id=<クライアントID>&response_type=code&scope=aws.cognito.signin.user.admin+email+openid+phone+profile&redirect_uri=http://localhost:8080&code_challenge_method=S256&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+    ```
+- トークンリクエスト
+    
+    ```bash
+    curl -d "client_id=<クライアントID>" -d "client_secret=<クライアントシークレット>" -d "redirect_uri=http://localhost:8080" -d "grant_type=authorization_code" -d "code=<認可コード>" -d "code_verifier=dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk" https://<ドメイン名>.auth.ap-northeast-1.amazoncognito.com/oauth2/token
+    ```
+
+インプリシットグラントの場合だといきなりアクセストークンを取得できる
+
+- 認可リクエスト	
+
+    ```bash
+    https://<ドメイン名>.auth.ap-northeast-1.amazoncognito.com/oauth2/authorize?client_id=<クライアントID>&response_type=token&scope=aws.cognito.signin.user.admin+email+openid+phone+profile&redirect_uri=http://localhost:8080
+    ```
